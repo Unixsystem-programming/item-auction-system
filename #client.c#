@@ -57,7 +57,7 @@ void* send_msg(void* arg) //send thread main
     while(1)
     {
       fgets(msg, BUF_SIZE, stdin);
-      while(getchar()!='\n');
+      
       if(!strcmp(msg,"q\n")||!strcmp(msg,"Q\n"))//q ,Q 입력 시 socket을 닫고 채팅 종료
 	{
 	  close(sock);

@@ -9,7 +9,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define PORTNUM 9000
+#define PORTNUM 9002
 #define MAX_CLNT 256
 
 void* handle_client(void *arg);
@@ -81,7 +81,11 @@ void *handle_client(void *arg){
   int i,len;
   char buf[256];
 
-  while((len=read(ns,buf,sizeof(buf)))!=0)send_msg(buf,len);
+  while((len=read(ns,buf,sizeof(buf)-1))!=0) {
+    send_msg(buf,len);
+    //buf[len]=0;
+    //flush(buf);
+  }
   
   pthread_mutex_lock(&mutx);
   for(i=0;i<client_cnt;i++){

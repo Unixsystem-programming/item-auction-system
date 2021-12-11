@@ -1,15 +1,19 @@
-CC = gcc 
-CFLAGS = -Wall -W -Wshadow -std=gnu99 
 TARGETS = client server
- 
-all: $(TARGETS)
+CC = gcc
+CFLAGS = -Wall -O3 -D_REENTRANT
 
-client : client.o
+LIBS= -lpthread
+
+SRCS =$(wildcard *.c)
+OBJS =$(SRCS:.c=.o)
+
+all: ${TARGETS} clean
+
+client : client.c
+	$(cc) $(CFLAGS) -o $@ $? $(LIBS)
 
 server : server.o
+	$(cc) $(CFLAGS) -o $@ $? $(LIBS)
 
-clean: 
-	rm -f *.o	
-
-distclean: clean
-	rm -f $(TARGETS)
+clean:
+	rm -f core *.o a.out

@@ -9,7 +9,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define PORTNUM 9002
+#define PORTNUM 9000
 #define MAX_CLNT 256
 
 void* handle_client(void *arg);
@@ -67,10 +67,9 @@ int main(void) {
     clients[client_cnt++]=ns;
     pthread_mutex_unlock(&mutx);
 
-    
     pthread_create(&pid,NULL,handle_client,(void*)&ns);
     pthread_detach(pid);
-    sprintf(buf, "Connected client IP : %s", inet_ntoa(cli.sin_addr));
+    //sprintf(buf, "Connected client IP : %s", inet_ntoa(cli.sin_addr));
   }
   close(sd);
 
@@ -82,8 +81,13 @@ void *handle_client(void *arg){
   char buf[256];
 
   while((len=read(ns,buf,sizeof(buf)-1))!=0) {
+    //fprintf(stderr,"1.msg: %s\n",buf);
+    //fprintf(stderr,"1.len: %d\n",len);
+    //fprintf(stderr,"1.strlen: %ld\n----------",strlen(buf));
     send_msg(buf,len);
-    //buf[len]=0;
+    //fprintf(stderr,"3.msg: %s",buf);
+
+    buf[0]='\0';
     //flush(buf);
   }
   
@@ -112,6 +116,11 @@ void send_msg(char* buf, int len)
 
     //send(clients[i], buf, len);
     for (i=0; i<client_cnt; i++)
-      send(clients[i], buf, strlen(buf) + 1, 0);
+      send(clients[i], buf, len, 0);
+    //fprintf(stderr,"1.str_len: %ld\n",strlen(buf));
+    //fprintf(stderr,"2.len: %d\n",len);
+    
+    //fprintf(stderr,"2.msg: %s",buf);
+    
     pthread_mutex_unlock(&mutx);
 }

@@ -65,9 +65,9 @@ int main(void) {
     }
     //동기화
     pthread_mutex_lock(&mutx);
-    //clients[client_cnt]=ns;
+  
     pthread[client_cnt++]=ns;
-    //client_cnt++;
+
     pthread_mutex_unlock(&mutx);
 
     pthread_create(&pthread[client_cnt-1],NULL,handle_client,(void*)&ns);
@@ -84,12 +84,10 @@ void *handle_client(void *arg){
   int ns=*((int*)arg);
   int i,len;
   char buf[256];
-  char name[256];
 
-  //recv(ns,name,sizeof(name),0); //신청자 받음
-  //fprintf(stderr,"ok,%s\n",name);
-  name[0]='\n';
-  buf[0]='\n';
+  if((len=recv(ns,buf,sizeof(buf),0))!=0) fprintf(stderr,"ok,%s",buf);
+  //신청자 저장
+  buf[0]='\0';
   
   while((len=recv(ns,buf,sizeof(buf),0))!=0) {
     send_msg(ns,buf,len);
@@ -102,9 +100,9 @@ void *handle_client(void *arg){
 void send_msg(int ns,char* buf, int len)
 {
   //int i;
-    pthread_mutex_lock(&mutx);
+  //pthread_mutex_lock(&mutx);
 
     send(ns, buf, len, 0);
 
-    pthread_mutex_unlock(&mutx);
+    //pthread_mutex_unlock(&mutx);
 }

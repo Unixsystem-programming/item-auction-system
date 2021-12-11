@@ -53,7 +53,14 @@ void* send_msg(void* arg) //send thread main
   char name_msg[NAME_SIZE+BUF_SIZE];
   char msg[BUF_SIZE]; //mh
   char name[NAME_SIZE]; //mh
-      
+
+  //strcpy(name,"mina");
+  fgets(name,NAME_SIZE,stdin);
+  
+  send(sock,name,sizeof(name),0);//경매신청
+  name[strlen(name)-1]='\0';
+
+
     while(1)
     {
       fgets(msg, BUF_SIZE, stdin);
@@ -63,16 +70,13 @@ void* send_msg(void* arg) //send thread main
 	  close(sock);
 	  exit(0);
 	}
-      send(sock,name,sizeof(name),0);//경매신청
       
-      sprintf(name_msg, "[%d] %s", sock, msg);//[이름] 채팅내용
+      sprintf(name_msg, "[%s] %s", name, msg);//[이름] 채팅내용
      
       send(sock, name_msg, sizeof(name_msg),0);
       
       name_msg[0]='\0';
       msg[0]='\0';
-      name[0]='\n';
-      
     }
   return NULL;
 

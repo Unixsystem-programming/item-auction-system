@@ -63,16 +63,15 @@ void* send_msg(void* arg) //send thread main
 	  close(sock);
 	  exit(0);
 	}
+      send(sock,name,sizeof(name),0);//경매신청
+      
       sprintf(name_msg, "[%d] %s", sock, msg);//[이름] 채팅내용
-
-      //fprintf(stderr,"1.strlen: %ld\n",strlen(name_msg));
-      //fprintf(stderr,"1.msg:%s\n",name_msg);
-      
+     
       send(sock, name_msg, sizeof(name_msg),0);
-      
       
       name_msg[0]='\0';
       msg[0]='\0';
+      name[0]='\n';
       
     }
   return NULL;
@@ -87,13 +86,10 @@ void* recv_msg(void* arg) //recv thread의 main
   int len;
   while(1){
     len=recv(sock, name_msg,sizeof(name_msg),0);//읽어오기
-    //fprintf(stderr,"2.len: %d\n",len);
-    //fprintf(stderr,"2.strlen:%ld\n",strlen(name_msg));
-    //fprintf(stderr,"2.msg:%s",name_msg);
+ 
     if(len==-1)//오류가 있다면
 	return (void*)-1;
 
-    //fprintf(stderr,"2.name_msg: %s",name_msg);
     fputs(name_msg,stdout);//출력
     name_msg[0]='\0';//전에 버퍼에 들어있던 내용 삭제
   }

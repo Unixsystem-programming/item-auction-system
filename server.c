@@ -13,7 +13,7 @@
 #define MAX_CLNT 256
 
 void* handle_client(void *arg);
-void send_msg(char* buf,int len);
+void send_msg(int ns,char* buf,int len);
 
 int client_cnt=0;
 int clients[MAX_CLNT]; //클라이언트 소켓
@@ -23,8 +23,8 @@ int main(void) {
   char buf[256];
   struct sockaddr_in sin, cli;
   int sd, ns, clientlen = sizeof(cli);
-  pthread_t pid;
- 
+  //pthread_t pid;
+  pthread_t pthread[3];
 
   //struct tm *t;
   //time_t timer = time(NULL);
@@ -49,12 +49,13 @@ int main(void) {
   }
 
   //클라이언트 연결 기다림
-  if (listen(sd,5)) {
+  if (listen(sd,3)) {
     perror("listen");
     exit(1);
   }
 
   while(1){
+    int pid=0;
     //t=localtime(&timer);
 
     //연결 요청 수락
@@ -64,11 +65,15 @@ int main(void) {
     }
     //동기화
     pthread_mutex_lock(&mutx);
-    clients[client_cnt++]=ns;
+    //clients[client_cnt]=ns;
+    pthread[client_cnt++]=ns;
+    //client_cnt++;
     pthread_mutex_unlock(&mutx);
 
-    pthread_create(&pid,NULL,handle_client,(void*)&ns);
-    pthread_detach(pid);
+    pthread_create(&pthread[client_cnt-1],NULL,handle_client,(void*)&ns);
+    for(int j=0;j<client_cnt;j++){
+      pthread_detach(pthread[j]);
+    }
     //sprintf(buf, "Connected client IP : %s", inet_ntoa(cli.sin_addr));
   }
   close(sd);
@@ -79,48 +84,27 @@ void *handle_client(void *arg){
   int ns=*((int*)arg);
   int i,len;
   char buf[256];
+  char name[256];
 
-  while((len=read(ns,buf,sizeof(buf)-1))!=0) {
-    //fprintf(stderr,"1.msg: %s\n",buf);
-    //fprintf(stderr,"1.len: %d\n",len);
-    //fprintf(stderr,"1.strlen: %ld\n----------",strlen(buf));
-    send_msg(buf,len);
-    //fprintf(stderr,"3.msg: %s",buf);
-
-    buf[0]='\0';
-    //flush(buf);
-  }
+  //recv(ns,name,sizeof(name),0); //신청자 받음
+  //fprintf(stderr,"ok,%s\n",name);
+  name[0]='\n';
+  buf[0]='\n';
   
-  pthread_mutex_lock(&mutx);
-  for(i=0;i<client_cnt;i++){
-    if(ns==clients[i]){
-      while(i++<client_cnt-1) clients[i]=clients[i]+1;
-      break;
-    }
+  while((len=recv(ns,buf,sizeof(buf),0))!=0) {
+    send_msg(ns,buf,len);
+    buf[0]='\0';
   }
-  client_cnt--;
-
-  //sprintf(buf, "Your IP address is %s", inet_ntoa(cli.sin_addr));
-  //sprintf(buf,"your cnt ..%d",ns);
-  //if (send(ns, buf, strlen(buf) + 1, 0) == -1) {
-  //perror("send");
-  //exit(1);}
-  pthread_mutex_unlock(&mutx);
+ 
   close(ns);
   return NULL;
 }
-void send_msg(char* buf, int len)
+void send_msg(int ns,char* buf, int len)
 {
-    int i;
+  //int i;
     pthread_mutex_lock(&mutx);
 
-    //send(clients[i], buf, len);
-    for (i=0; i<client_cnt; i++)
-      send(clients[i], buf, len, 0);
-    //fprintf(stderr,"1.str_len: %ld\n",strlen(buf));
-    //fprintf(stderr,"2.len: %d\n",len);
-    
-    //fprintf(stderr,"2.msg: %s",buf);
-    
+    send(ns, buf, len, 0);
+
     pthread_mutex_unlock(&mutx);
 }

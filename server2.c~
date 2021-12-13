@@ -1,0 +1,165 @@
+/*硫��곗벐�덈뱶 湲곕컲 �쒕쾭 �꾨줈洹몃옩*/
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <pthread.h>
+
+#define PORTNUM 8881 //port吏���
+#define MAX_CLNT 20
+
+void* handle_client(void *arg); //�묒냽�섎뒗 �ъ슜�먮� 愿�由ы븯�� thread main
+void send_msg(int ns,char* buf,int len); //�ъ슜�먮뱾�먭쾶 硫붿꽭吏� �꾨떖
+void send_msg_all(char* buf,int len);
+
+int client_cnt=0;
+int clients[MAX_CLNT]; //�대씪�댁뼵�� �뚯폆
+int MAX_PRICE=0; //理쒖쥌寃쎈ℓ媛� 
+pthread_mutex_t mutx;
+
+int main(void) {
+  char buf[256];
+  struct sockaddr_in sin, cli;
+  int sd, ns, clientlen = sizeof(cli);
+  //pthread_t pid;
+  pthread_t pthread[20];
+
+  //struct tm *t;
+  //time_t timer = time(NULL);
+  //t=localtime(&timer);
+
+  pthread_mutex_init(&mutx, NULL);
+  /*�뚯폆�앹꽦*/
+  if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    perror("socket");
+    exit(1);
+  }
+  
+  memset((char *)&sin, '\0', sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_port = htons(PORTNUM);
+  sin.sin_addr.s_addr = inet_addr("210.93.57.50");
+
+  //�뚯폆 �대쫫 吏���
+  if (bind(sd, (struct sockaddr *)&sin, sizeof(sin))) {    
+    perror("bind");
+    exit(1);
+  }
+
+  //�대씪�댁뼵�� �곌껐 湲곕떎由�
+  if (listen(sd,3)) {
+    perror("listen");
+    exit(1);
+  }
+
+  while(1){
+    int pid=0;
+    //t=localtime(&timer);
+
+    //�곌껐 �붿껌 �섎씫
+    if ((ns = accept(sd, (struct sockaddr *)&cli, &clientlen))==-1){
+      perror("accept");
+      exit(1);
+    }
+    //�숆린��
+    pthread_mutex_lock(&mutx);
+    clients[client_cnt++]=ns;//�ъ슜�� �뚯폆 �붿뒪�щ┰�� ����
+    //    pthread[client_cnt++]=ns; ?
+    pthread_mutex_unlock(&mutx);
+
+    
+    pthread_create(&pthread[client_cnt-1],NULL,handle_client,(void*)&ns);//�대떦 �ъ슜�먯뿉寃� �쒕퉬�ㅽ븷  �곕젅�� �앹꽦
+    for(int j=0;j<client_cnt;j++){
+      pthread_detach(pthread[j]);//�대떦 �곕젅�� 醫낅즺 ��, �먯썝�댁젣
+    }
+    //sprintf(buf, "Connected client IP : %s", inet_ntoa(cli.sin_addr));
+  }
+  close(sd);
+
+  return 0;
+}
+/*
+  1. �ъ슜�� �대쫫 ���� 
+  2. �낆같媛� 諛쏄린
+  3. */
+void *handle_client(void *arg){//�ъ슜�� �쒕퉬�� �쒓났 thread main
+  int ns=*((int*)arg);
+  int i,len;// len=buf�� 湲몄씠, i=??
+  char name[20];//�ъ슜�� �대쫫�� ���ν븯�� 踰꾪띁
+  char buf[256];//�ъ슜�먯뿉寃� 硫붿꽭吏�瑜� �꾨떖�� 踰꾪띁
+  char name_buf[300];//�덉걯寃� 異쒕젰�� �꾪븳 踰꾪띁
+  int price=0;
+  if((len=recv(ns,name,sizeof(name),0))!=0)
+    fprintf(stderr,"ok,%s",name);
+    //�좎껌�� ����,�뺤씤 硫섑듃 異쒕젰
+  if((len=recv(ns,buf,sizeof(buf),0))!=0)//�ъ슜�먯쓽理쒖큹 寃쎈ℓ媛� �좎껌
+    {
+      price=atoi(buf);
+      if(price>MAX_PRICE)//�꾩옱 理쒕�媛�蹂대떎 �믪� 媛�寃⑹쓣 遺�瑜대㈃..
+      { fprintf(stderr,"big\n");
+	MAX_PRICE=price;//寃쎈ℓ媛� 媛깆떊
+	name[strlen(name)-1]='\0'; //以묎컙 媛쒗뻾 諛⑹�
+	sprintf(name_buf,"current MAX : [ %s ] %s", name, buf);
+	send_msg_all(name_buf,strlen(name_buf));//�대뼡 �ъ슜�먭� 理쒓퀬媛� 遺덈��붿� 諛⑹넚
+	name_buf[0]='\0';
+	buf[0]='\0';
+      }
+      else
+	{
+	fprintf(stderr,"small\n");
+	buf[0]='\0';
+	strcpy(buf,"\n *sorry, this price is insufficient.\n Plz call the higher price.*\n");//�낆같媛��깅줉�� �섏� 紐삵뻽�뚯쓣 異쒕젰
+	send_msg(ns,buf,strlen(buf));
+	memset(buf,'\0',sizeof(buf));
+      }
+    }
+       
+  while((len=recv(ns,buf,sizeof(buf),0))!=0) {//臾댄븳�� �ъ슜�먮줈遺��� �낆같媛�瑜� 諛쏆쓬
+       price = atoi(buf);
+
+    if(price>MAX_PRICE)//�꾩옱 理쒕�媛�蹂대떎 �믪� 媛�寃⑹쓣 遺�瑜대㈃..
+      { fprintf(stderr,"big\n");
+	MAX_PRICE=price;//寃쎈ℓ媛� 媛깆떊
+	sprintf(name_buf,"current MAX : [ %s ] %s", name, buf);
+	send_msg_all(name_buf,strlen(name_buf));//�대뼡 �ъ슜�먭� 理쒓퀬媛� 遺덈��붿� 諛⑹넚
+	name_buf[0]='\0';
+	buf[0]='\0';
+      }
+    else //�꾩옱 理쒕�媛�蹂대떎 ��� 媛�寃⑹쓣 遺�瑜몃떎硫�..
+      {
+	fprintf(stderr,"small\n");
+	buf[0]='\0';
+	strcpy(buf,"sorry, this price is insufficient.\n Plz call the higher price.");//�낆같媛��깅줉�� �섏� 紐삵뻽�뚯쓣 異쒕젰
+	send_msg(ns,buf,strlen(buf));
+	buf[0]='\0';
+      }
+  }
+ 
+  close(ns);
+  return NULL;
+}
+
+void send_msg(int ns,char* buf, int len)//�ъ슜�먯뿉寃� 硫붿꽭吏� �꾨떖�좏븿��
+{
+  //int i;
+  //pthread_mutex_lock(&mutx);
+
+    send(ns, buf, len, 0);
+
+    //pthread_mutex_unlock(&mutx);
+}
+
+void send_msg_all(char* buf,int len)
+{
+  /*for(int i=0; i<client_cnt;i++)
+    {
+      send_msg(clients[i],buf,len);
+      }*/
+  send(clients[0],buf,len,0);
+      
+}

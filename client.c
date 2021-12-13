@@ -26,7 +26,12 @@ int main(int argc, char* argv[])
   struct sockaddr_in serv_addr; //서버주소정보 담을변수
   pthread_t snd_thread, rcv_thread; //쓰레드 2개 선언:1-보낼때, 2-받을 때
   void * thread_return;
-  
+
+  int nbyte = 256;
+  size_t filesize = 0, bufsize = 0;
+  FILE *file = NULL;
+
+  file = fopen("readtest.txt", "wb");
 
   sock=socket(PF_INET, SOCK_STREAM,0);
 
@@ -41,9 +46,18 @@ int main(int argc, char* argv[])
   /*쓰레드 생성 및 join*/
   pthread_create(&snd_thread, NULL, send_msg, (void*)&sock);
   pthread_create(&rcv_thread, NULL, recv_msg, (void*)&sock);
+  
+  while(nbyte!=0) {
+    nbyte = recv(sock, buf, 256, 0);
+    fwrite(buf, sizeof(char), nbyte, file);		
+  }
+  
   pthread_join(snd_thread, &thread_return);
   pthread_join(rcv_thread, &thread_return);
+
   close(sock);
+  fclose(file);
+  
   return 0;
 }
 
@@ -59,18 +73,18 @@ void* send_msg(void* arg) //send thread main
   
   send(sock,name,sizeof(name),0);//경매신청
   name[strlen(name)-1]='\0';
-
-
+  
     while(1)
     {
+      //fprintf(stderr,"%s","input#");
       fgets(msg, BUF_SIZE, stdin);
+      
 
       if(!strcmp(msg,"q\n")||!strcmp(msg,"Q\n"))//q ,Q 입력 시 socket을 닫고 채팅 종료
 	{
 	  close(sock);
 	  exit(0);
-	}
-      
+	} 
       sprintf(name_msg, "[%s] %s", name, msg);//[이름] 채팅내용
      
       send(sock, name_msg, sizeof(name_msg),0);

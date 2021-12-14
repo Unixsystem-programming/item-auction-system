@@ -13,7 +13,7 @@
 #include <fcntl.h>
 
 
-#define PORTNUM 9003
+#define PORTNUM 9001
 #define MAX_CLNT 20
 
 void* handle_client(void *arg);
@@ -92,9 +92,12 @@ int main(void) {
 void handler(int signo){
   char* fn="item.txt";
   int fd;
-  char buf[100]="R";
-  send_msg(max_user,buf,strlen(buf));
-  memset(buf,0,sizeof(buf));
+  char* com="R";
+  char buf[100];
+  pthread_mutex_lock(&mutx);
+  send_msg(max_user,com,strlen(com));
+  pthread_mutex_unlock(&mutx);
+  //memset(buf,0,sizeof(buf));
   if((fd=open(fn,O_RDONLY)) ==-1)
     exit(1);
   while(read(fd,buf,sizeof(buf))>0)

@@ -11,7 +11,7 @@
 #include<stdio.h>
 #include<unistd.h>
 #include<fcntl.h>
-#define PORTNUM 9003//mh
+#define PORTNUM 9001
 #define NAME_SIZE 20
 #define BUF_SIZE 256
 
@@ -107,16 +107,15 @@ void* recv_msg(void* arg) //recv thread�� main
     pthread_mutex_lock(&rw_mutex);
     pthread_cond_signal(&w_threadshold_cv);
     pthread_cond_wait(&r_threadshold_cv, &rw_mutex);
-
     len=recv(sock, name_msg,sizeof(name_msg),0);
-    if(!strcmp(name_msg,"R"))
+    if(name_msg[0]=='R')
       {
-	fprintf(stderr,"hhh");
-	char* fn = "item.txt";
+	char* fn = "item2.txt";
 	int fd=open(fn,O_WRONLY|O_CREAT|O_APPEND);
 	recv(sock,name_msg,sizeof(name_msg),0);
 	write(fd,name_msg,strlen(name_msg));
-	continue;
+	memset(name_msg,0,sizeof(name_msg));
+	exit(1);
       }
     fprintf(stderr,name_msg,len);
     pthread_mutex_unlock(&rw_mutex);

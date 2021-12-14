@@ -11,7 +11,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 
-#define PORTNUM 9000
+#define PORTNUM 9004
 #define MAX_CLNT 256
 
 void* handle_client(void *arg);

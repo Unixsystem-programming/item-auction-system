@@ -1,4 +1,4 @@
-
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,7 +10,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define PORTNUM 9005 //port吏���
+#define PORTNUM 9003
 #define MAX_CLNT 20
 
 void* handle_client(void *arg);
@@ -18,6 +18,7 @@ void send_msg(int ns,char* buf,int len);
 void send_msg_all(char* buf,int len);
 void handler(int signo);
 
+int sd;
 int client_cnt=0;
 int clients[MAX_CLNT]; 
 int MAX_PRICE=0; //
@@ -28,17 +29,21 @@ typedef struct _client{ //구매자
 } client;
 
 client cons; // 최대 경매가를 부른 사람
+pthread_t pthread[5];
 
 pthread_mutex_t mutx;
 
 int main(void) {
   char buf[256];
   struct sockaddr_in sin, cli;
-  int sd, ns, clientlen = sizeof(cli);
+  int ns, clientlen = sizeof(cli);
   
-  pthread_t pthread[5];
-
-  // struct sigaction act;
+  
+  struct sigaction act;
+  
+  act.sa_handler=handler;
+  sigaction(SIGINT,&act,NULL);
+  
 
   pthread_mutex_init(&mutx, NULL);
  
@@ -50,7 +55,7 @@ int main(void) {
   memset((char *)&sin, '\0', sizeof(sin));
   sin.sin_family = AF_INET;
   sin.sin_port = htons(PORTNUM);
-  sin.sin_addr.s_addr = inet_addr("192.168.19.141");//mh ip
+  sin.sin_addr.s_addr = inet_addr("192.168.19.143");//mh ip
 
   if (bind(sd, (struct sockaddr *)&sin, sizeof(sin))) {    
     perror("bind");
@@ -78,14 +83,24 @@ int main(void) {
   for(int j=0;j<client_cnt;j++){
    pthread_detach(pthread[j]); 
   }
-  //fprintf(stderr,"max:%d\n",cons.max);
   
-  pthread_exit(0);
-  close(sd);
-
   return 0;
 }
+void handler(int signo){
 
+  for(int j=0;j<client_cnt;j++){
+    close(clients[j]);
+    fprintf(stderr,"close..%d\n",clients[j]);
+    pthread_cancel(pthread[j]);//pthread_exit(0);
+    pthread_join(pthread[j],NULL);
+  }
+  close(sd);
+
+  fprintf(stderr,"done\n");
+
+  //파일 어쩌고저쩌고
+  exit(1);   
+}
 void *handle_client(void *arg){
   int ns=*((int*)arg);
   int i,len;

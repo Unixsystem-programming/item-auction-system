@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include<stdio.h>
 
-#define PORTNUM 9005//mh
+#define PORTNUM 9003//mh
 #define NAME_SIZE 20
 #define BUF_SIZE 256
 
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 
   memset(&serv_addr,0,sizeof(serv_addr));
   serv_addr.sin_family=AF_INET;
-  serv_addr.sin_addr.s_addr=inet_addr("192.168.19.141");//mh ip
+  serv_addr.sin_addr.s_addr=inet_addr("192.168.19.143");//mh ip
   serv_addr.sin_port=htons(PORTNUM);
 
   if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==1)

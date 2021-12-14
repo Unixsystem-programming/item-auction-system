@@ -9,7 +9,8 @@
 #include <time.h>
 #include <pthread.h>
 #include<stdio.h>
-
+#include<unistd.h>
+#include<fcntl.h>
 #define PORTNUM 9003//mh
 #define NAME_SIZE 20
 #define BUF_SIZE 256
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
 
   memset(&serv_addr,0,sizeof(serv_addr));
   serv_addr.sin_family=AF_INET;
-  serv_addr.sin_addr.s_addr=inet_addr("192.168.19.143");//mh ip
+  serv_addr.sin_addr.s_addr=inet_addr("210.93.57.50");//mh ip
   serv_addr.sin_port=htons(PORTNUM);
 
   if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==1)
@@ -108,7 +109,15 @@ void* recv_msg(void* arg) //recv thread�� main
     pthread_cond_wait(&r_threadshold_cv, &rw_mutex);
 
     len=recv(sock, name_msg,sizeof(name_msg),0);
-    
+    if(!strcmp(name_msg,"R"))
+      {
+	fprintf(stderr,"hhh");
+	char* fn = "item.txt";
+	int fd=open(fn,O_WRONLY|O_CREAT|O_APPEND);
+	recv(sock,name_msg,sizeof(name_msg),0);
+	write(fd,name_msg,strlen(name_msg));
+	continue;
+      }
     fprintf(stderr,name_msg,len);
     pthread_mutex_unlock(&rw_mutex);
 

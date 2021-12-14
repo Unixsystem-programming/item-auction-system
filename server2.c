@@ -9,6 +9,9 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 
 #define PORTNUM 9003
 #define MAX_CLNT 20
@@ -30,7 +33,7 @@ typedef struct _client{ //구매자
 
 client cons; // 최대 경매가를 부른 사람
 pthread_t pthread[5];
-
+int max_user;
 pthread_mutex_t mutx;
 
 int main(void) {
@@ -55,7 +58,7 @@ int main(void) {
   memset((char *)&sin, '\0', sizeof(sin));
   sin.sin_family = AF_INET;
   sin.sin_port = htons(PORTNUM);
-  sin.sin_addr.s_addr = inet_addr("192.168.19.143");//mh ip
+  sin.sin_addr.s_addr = inet_addr("210.93.57.50");//mh ip
 
   if (bind(sd, (struct sockaddr *)&sin, sizeof(sin))) {    
     perror("bind");
@@ -87,7 +90,18 @@ int main(void) {
   return 0;
 }
 void handler(int signo){
-
+  char* fn="item.txt";
+  int fd;
+  char buf[100]="R";
+  send_msg(max_user,buf,strlen(buf));
+  memset(buf,0,sizeof(buf));
+  if((fd=open(fn,O_RDONLY)) ==-1)
+    exit(1);
+  while(read(fd,buf,sizeof(buf))>0)
+    {
+      send_msg(max_user,buf,strlen(buf));
+    }
+  
   for(int j=0;j<client_cnt;j++){
     close(clients[j]);
     fprintf(stderr,"close..%d\n",clients[j]);
@@ -98,7 +112,6 @@ void handler(int signo){
 
   fprintf(stderr,"done\n");
 
-  //파일 어쩌고저쩌고
   exit(1);   
 }
 void *handle_client(void *arg){
@@ -125,7 +138,8 @@ void *handle_client(void *arg){
             MAX_PRICE=price;
             cons.ns=ns;
             cons.max=MAX_PRICE;
-
+	    max_user=ns;
+	    
             sprintf(name_buf,"current MAX : [%s] %s", name, buf); //현재 낙찰가;
             send_msg_all(name_buf,strlen(name_buf)); //모두에게 현재 낙찰가격 방송
             

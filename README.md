@@ -1,4 +1,4 @@
-![header](https://capsule-render.vercel.app/api?type=wave&color=auto&height=200&section=header&text=item%Chatting%Pramming&fontSize=90&theme=highcontrast)
+![header](https://capsule-render.vercel.app/api?type=wave&color=auto&height=200&section=header&text=item%20Chatting%20Pramming&fontSize=90)
 # Unix system programing 설계 과제
 
 * 개발 주제 : 채팅기반 아이템 경매 시스템 

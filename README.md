@@ -48,16 +48,12 @@ Client<br>
 입찰가가 가장 높지 않은 경우 고객에게 더 높은 가격을 제안하라는 메시지를 표시한다.<br>
 
 ### 클라이언 주요 로직
-send msg<br>
-사용자가 자신의 이름과 입찰 가격을 입력한다<br> 
-서버에 보낼 시 뮤텍스로 공유자원 동기화와 조건변수로 스레드로부터 액세스를 안전하게 보장한다.<br>
+(1) send msg<br>
+사용자가 자신의 이름과 입찰가격을 입력한다<br> 
+서버에 보낼 시 뮤텍스로 공유 자원 동기화와 조건변수로 스레드로부터 액세스를 안전하게 보장한다.<br>
 (조건변수)
 pthread_cond_signal(&r_threadshold_cv); //수신 쓰레드 깨운다. <br>
 pthread_cond_wait(&w_threadshold_cv, &rw_mutex); //수신 쓰레드가 메세지를 입력받고 깨워주길 기다린다 <br>
-recv_msg<br>
+(2) recv_msg<br>
 send msg와 마찬가지로 동기화 시킨다.
 최고 낙찰가인 경우, 아이템이 들어 있는 파일에 낙찰자 이름과 가격을 파일에 기록함으로 낙찰한다.
-int fd = open(fn, O_WRONLY | O_CREAT | O_APPEND); 
-recv(sock, name_msg, sizeof(name_msg), 0); 
-write(fd, name_msg, strlen(name_msg)); //파일에 쓰기
-## 실행방법
